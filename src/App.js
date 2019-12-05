@@ -5,13 +5,12 @@ import './App.css';
 import HomePage from './pages/homepage/homepage.component.jsx';
 import ShopPage from './pages/shop/shop.component';
 import Header from './components/header/header.component';
-import SignInAndSignUpPage
-  from './pages/sign-in-and-sign-up/sign-in-and-sign-up.component';
-import {auth} from './firebase/firebase.utils';
+import SignInAndSignUpPage from './pages/sign-in-and-sign-up/sign-in-and-sign-up.component';
+import {auth, createUserProfileDocument} from './firebase/firebase.utils';
 
 class App extends React.Component {
-  constructor (props) {
-    super (props);
+  constructor(props) {
+    super(props);
 
     this.state = {
       currentUser: null,
@@ -20,19 +19,33 @@ class App extends React.Component {
 
   unsubscribeFromAuth = null;
 
-  componentDidMount () {
-    this.unsubscribeFromAuth = auth.onAuthStateChanged (user => {
-      this.setState ({currentUser: user});
+  componentDidMount() {
+    this.unsubscribeFromAuth = auth.onAuthStateChanged(async userAuth => {
+      if (userAuth) {
+        const userRef = await createUserProfileDocument(userAuth);
+        userRef.onSnapshot(snapShot => {
+          this.setState({
+            currentUser: {
+              id: snapShot.id,
+              ...snapShot.data(),
+            },
+          });
 
-      console.log (user);
+          console.log(this.state);
+        });
+      } else {
+        this.setState({
+          currentUser: userAuth,
+        });
+      }
     });
   }
 
-  componentWillUnmount () {
-    this.unsubscribeFromAuth ();
+  componentWillUnmount() {
+    this.unsubscribeFromAuth();
   }
 
-  render () {
+  render() {
     return (
       <div>
         <Header currentUser={this.state.currentUser} />
